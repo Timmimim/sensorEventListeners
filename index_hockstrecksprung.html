@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Testing mobile device sensors</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+</head>
+<body>
+<table class="table table-striped table-bordered">
+    <tr>
+        <td>Sensor</td>
+        <td>Value</td>
+    </tr>
+    <tr>
+        <td>acceleration (excl. gravity)</td>
+        <td id="moAccel"></td>
+    </tr>
+    <tr>
+        <td>acceleration (incl. gravity)</td>
+        <td id="moAccelGrav"></td>
+    </tr>
+    <tr>
+        <td>rotation rate</td>
+        <td id="moRotation"></td>
+    </tr>
+    <tr>
+        <td>device orientation</td>
+        <td id="devOrientation"></td>
+    </tr>
+    <tr>
+        <td>interval</td>
+        <td id="moInterval"></td>
+    </tr>
+    <tr>
+        <td>reps</td>
+        <td id="squad-jump_reps"></td>
+    </tr>
+</table>
+
+<button id="go_button" name="go_button" class="button button-danger" onclick="go()">~~~ GO! ~~~</button>
+<button id="stop_button" name="stop_button" onclick="stop()"> \\\ STOP! /// </button>
+
+<p style="margin: 10px"><small>Demo from <a href="http://www.html5rocks.com/en/tutorials/device/orientation/" target="_blank">HTML5 Rocks</a> article.</small></p>
+
+<script type="application/javascript">
+
+    var measure = "#Measurement, Acceleration X, Acceleration Y, Acceleration Z, Rotation Alpha, Rotation Beta, Rotation Gamma, Orientation Alpha, Orientation Beta, Orientation Gamma \r\n";
+
+    var freshlyTriggered = false;
+    var timeoutToStart = 3000;
+
+    function go() {
+        if ( ( 'DeviceMotionEvent' in window )  &&  ( 'DeviceOrientationEvent' in window ) ) {
+            alert('Device motion ready to go in ' + (timeoutToStart / 1000) + ' seconds!');
+            setTimeout(function () {
+                window.addEventListener('devicemotion', deviceMotionHandler, false);
+                window.addEventListener('deviceorientation', deviceOrientationHandler, false);
+
+                setTimeout( function () {
+                    freshlyTriggered = true;
+                    down();
+                }, 50);
+            }, timeoutToStart);
+        } else {
+            alert('Device motion not supported.\n We are sorry, but your device is not compatible with OriGamis SportyTasks');
+        }
+    }
+
+    var interval = 1;
+    var measure_count = 0;
+    var deviceOrientation = [0,0,0];
+    var z_acceleration = 0;
+    var y_acceleration = 0;
+    function deviceMotionHandler(eventData) {
+            var info, xyz = "[X, Y, Z]";
+
+            // Grab the acceleration from the results
+            var acceleration = eventData.acceleration;
+            info = xyz.replace("X", acceleration.x && acceleration.x.toFixed(3));
+            info = info.replace("Y", acceleration.y && acceleration.y.toFixed(3));
+            info = info.replace("Z", acceleration.z && acceleration.z.toFixed(3));
+            document.getElementById("moAccel").innerHTML = info;
+            z_acceleration = parseFloat(acceleration.z);
+            y_acceleration = parseFloat(acceleration.y);
+
+            // Grab the acceleration including gravity from the results
+            acceleration = eventData.accelerationIncludingGravity;
+            info = xyz.replace("X", acceleration.x && acceleration.x.toFixed(3));
+            info = info.replace("Y", acceleration.y && acceleration.y.toFixed(3));
+            info = info.replace("Z", acceleration.z && acceleration.z.toFixed(3));
+            document.getElementById("moAccelGrav").innerHTML = info;
+
+            // Grab the rotation rate from the results
+            var rotation = eventData.rotationRate;
+            info = xyz.replace("X", rotation.alpha && rotation.alpha.toFixed(3));
+            info = info.replace("Y", rotation.beta && rotation.beta.toFixed(3));
+            info = info.replace("Z", rotation.gamma && rotation.gamma.toFixed(3));
+            document.getElementById("moRotation").innerHTML = info;
+
+            // // Grab the refresh interval from the results
+            info = eventData.interval;
+            document.getElementById("moInterval").innerHTML = info;
+            interval=1;
+            //measure_count++;
+            /**measure =  measure + measure_count +", "
+                    + eventData.acceleration.x + ", "
+                    + eventData.acceleration.y + ", "
+                    + eventData.acceleration.z + ", "
+                    + rotation.alpha + ", "
+                    + rotation.beta + ", "
+                    + rotation.gamma +", "
+                    + deviceOrientation[0] + ", "
+                    + deviceOrientation[1] + ", "
+                    + deviceOrientation[2] +" \r\n"; */
+
+
+        interval++;
+    }
+    function deviceOrientationHandler (eventData) {
+            var info, xyz = "[X, Y, Z]";
+
+            // Grab the acceleration from the results
+            info = xyz.replace("X", eventData.alpha && eventData.alpha.toFixed(3));
+            info = info.replace("Y", eventData.beta && eventData.beta.toFixed(3));
+            info = info.replace("Z", eventData.gamma && eventData.gamma.toFixed(3));
+            document.getElementById("devOrientation").innerHTML = info;
+
+            deviceOrientation = [eventData.alpha, eventData.beta, eventData.gamma];
+            //console.log(1000 + parseFloat(deviceOrientation[1]));
+
+    }
+
+    function stop() {
+        /**if (measure != "#Measurement, Acceleration X, Acceleration Y, Acceleration Z, Rotation Alpha, Rotation Beta, Rotation Gamma, Orientation Alpha, Orientation Beta, Orientation Gamma \r\n") {
+            $.ajax(
+                {
+                    type: "POST",
+                    url: "/sensordata",
+                    dataType: "String",
+                    data: {
+                        sensData: measure
+                    },
+                    statusCode: {
+                        200: function () {
+                            alert("Measurement saved successfully!");
+                        },
+                        400: function () {
+                            alert("Saving did not work.")
+                        }
+                    }
+                }
+            );
+        }*/
+        window.removeEventListener('devicemotion', deviceMotionHandler, false);
+        window.removeEventListener('deviceorientation', deviceOrientationHandler, false);
+        measure = "#Measurement, Acceleration X, Acceleration Y, Acceleration Z, Rotation Alpha, Rotation Beta, Rotation Gamma, Orientation Alpha, Orientation Beta, Orientation Gamma \r\n";
+        interval=1;
+        measure_count = 0;
+    }
+
+    var beschleunigungNegativ;
+    var startNeigungBeta = 0;
+    var countBeschlGroesserEins;
+    var minBeschl, maxBeschl;
+    var diffBetaNeigung = 0;
+    var repCount = 0;
+    var diffBetaNeigungMax;
+    document.getElementById('squad-jump_reps').innerHTML = repCount;
+
+    var maxBeschlDown = 0, maxBeschlUp = 0;
+
+
+    var countBeschlGroesserEins = 0;
+
+    function down() {
+        setTimeout( function () {
+
+            if ((deviceOrientation[1] != 0) && freshlyTriggered) {
+
+                diffBetaNeigungMax = 0;
+                freshlyTriggered = false;
+                startNeigungBeta = parseFloat(deviceOrientation[1]) + 180;
+            }
+
+
+            diffBetaNeigung = Math.abs(startNeigungBeta - (parseFloat(deviceOrientation[1]) + 180));
+
+            diffBetaNeigungMax = Math.max(diffBetaNeigung, parseFloat(diffBetaNeigungMax));
+
+
+             if (Math.abs(z_acceleration) > maxBeschlDown){
+                maxBeschlDown = Math.abs(z_acceleration);
+            }
+
+            if (Math.abs(z_acceleration) >= 1 && Math.abs(z_acceleration) <= 11  && y_acceleration < 2 && y_acceleration > -2) {
+                ++countBeschlGroesserEins;
+            }
+
+            if (diffBetaNeigungMax >= 70 && countBeschlGroesserEins >= 7) {
+
+                freshlyTriggered = true;
+                countBeschlGroesserEins = 0;
+                maxBeschlUp = 0;
+                console.log('into UP()');
+                up();
+            }
+            else {
+                    console.log(countBeschlGroesserEins);
+                    console.log('recursive into down');
+                    down();
+            }
+        }, 2);
+    }
+
+    function up() {
+        setTimeout( function () {
+
+            if (freshlyTriggered) {
+                console.log('got to UP()');
+                diffBetaNeigungMax = 0;
+                freshlyTriggered = false;
+                startNeigungBeta = parseFloat(deviceOrientation[1]) + 180;
+            }
+
+            diffBetaNeigung = Math.abs(startNeigungBeta - (parseFloat(deviceOrientation[1]) + 180));
+
+            diffBetaNeigungMax = Math.max(diffBetaNeigung, parseFloat(diffBetaNeigungMax));
+
+            if (Math.abs(z_acceleration) > maxBeschlUp){
+                maxBeschlUp = Math.abs(z_acceleration);
+            }
+
+            if (Math.abs(z_acceleration) >= 1  && Math.abs(z_acceleration) <= 13) {
+                ++countBeschlGroesserEins;
+            }
+
+            if (diffBetaNeigungMax >= 70 && countBeschlGroesserEins >= 7 ) {
+
+                freshlyTriggered = true;
+                countBeschlGroesserEins = 0;
+                console.log('into Jump()');
+                jump();
+            }
+            else {
+                console.log('recursive into up');
+                up();
+            }
+        }, 2);
+    }
+
+    function jump() {
+        setTimeout( function () {
+
+            if (freshlyTriggered) {
+                console.log('got to JUMP()');
+                freshlyTriggered = false;
+            }
+
+            if ( Math.abs( y_acceleration ) >= 10) {
+                ++countBeschlGroesserEins;
+            }
+
+            if ( countBeschlGroesserEins >= 7 ) {
+                freshlyTriggered = true;
+                countBeschlGroesserEins = 0;
+                repCount = repCount + 1;
+                document.getElementById('squad-jump_reps').innerHTML = repCount;
+                console.log('into DOWN(), rep #' + repCount);
+                down();
+            }
+            else {
+                console.log('recursive into jump');
+                jump();
+            }
+        }, 2);
+    }
+
+</script>
+
+</body>
+</html>

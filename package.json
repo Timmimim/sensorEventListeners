@@ -1,0 +1,14 @@
+{
+  "name": "mobile device sensor inquiries",
+  "version": "0.0.1",
+  "description": "Closely following two online examples, this small project's purpose is the exploration of mobile device motion sensor capabilities and how to read data using HTML5.",
+  "author": {
+    "name": "Timm Kühnel",
+    "email": "t_kueh06@uni-muenster.de"
+  },
+  "main": "index",
+  "dependencies": {
+    "body-parser": "^1.17.1",
+    "express": "^4.15.2"
+  }
+}
